@@ -22,7 +22,7 @@ log_root.setLevel(logging.INFO)
 
 def main(args):
     cfg = get_config(args.config)
-    expe_name = f"{cfg.name}_{datetime.now().strftime('%y-%m-%d-%H:%M')}"
+    expe_name = f"{cfg.name}_{datetime.now().strftime('%y-%m-%d-%Hh%M')}"
     tb_logger = TensorBoardLogger(save_dir="./lightning_logs", name=expe_name)
     tb_logger.log_hyperparams(
         {key: value for key, value in cfg.items() if key != "model"}
@@ -42,7 +42,8 @@ def main(args):
         LearningRateMonitor(logging_interval='epoch'),
         ModelCheckpoint(monitor="lfw_auroc", mode="max",
                         filename=f'{cfg.name}_best',
-                        dirpath=tb_logger.log_dir)]
+                        dirpath=tb_logger.log_dir,
+                        save_on_train_epoch_end=True)]
     trainer = Trainer(
         max_epochs=cfg.max_epochs,
         accelerator="gpu",
@@ -52,7 +53,7 @@ def main(args):
         val_check_interval=cfg.val_check_interval,
         # detect_anomaly=True
     )
-    trainer.fit(model, train_loader, val_loader)
+    trainer.fit(model, train_loader, val_loader, ckpt_path=args.checkpoint)
     print("hold")
 
 
@@ -61,4 +62,5 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config", type=str, help="py config file", default="configs/ms1mv3_mbf.py"
     )
+    parser.add_argument("--checkpoint", type=str, help="path to checkpoint to resume training", default=None)
     main(parser.parse_args())
