@@ -1,2 +1,12 @@
-lightning
+easydict==1.10
+lightning==1.9.4
+mxnet==1.9.1
+numpy==1.21.5
+opencv_python==4.7.0.72
+Pillow
+ptflops==0.6.9
+torch==1.13.1
+torchmetrics==0.11.4
+torchsummary==1.5.1
+torchvision==0.14.1
 tensorboard
