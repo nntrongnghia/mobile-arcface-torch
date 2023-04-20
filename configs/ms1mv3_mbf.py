@@ -18,8 +18,8 @@ config.optimizer = "sgd"
 config.lr = 0.01
 config.momentum = 0.9
 config.weight_decay = 5e-4
-# config.loss = "cross_entropy"
-config.loss = "focal_loss"
+config.loss = "cross_entropy"
+# config.loss = "focal_loss"
 
 
 # Train Dataset
