@@ -120,7 +120,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Arcface Training in Pytorch")
+    parser = argparse.ArgumentParser(description="Arcface Test with LFW dataset")
     parser.add_argument(
         "--config",
         type=str,
