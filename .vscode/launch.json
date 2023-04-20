@@ -21,6 +21,15 @@
             "justMyCode": true
         },
         {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--checkpoint", "/home/nghia/hrapp/insightface/recognition/arcface_torch/work_dirs/ms1mv3_mbf/model.pt"]
+        },
+        {
             "name": "Debug Train",
             "type": "python",
             "request": "launch",

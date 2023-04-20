@@ -11,6 +11,7 @@ from torchsummary import summary
 from lightning.pytorch.callbacks import LearningRateMonitor
 from dataset import get_train_dataset
 from dataset.lfw import LFWPair
+from dataset.lfwbin import LFWBin
 from dataset.mnist import MNISTVal
 from lit_module import LitFaceRecognition
 from utils import get_config, print_config
@@ -35,7 +36,7 @@ def main(args):
     if "debug" in cfg.name:
         val_dataset = MNISTVal("/home/nghia/dataset/mnist")
     else:
-        val_dataset = LFWPair(**cfg.lfwpair_kwargs)
+        val_dataset = LFWBin(cfg.bin_path)
     val_loader = DataLoader(val_dataset, batch_size=10, shuffle=False, num_workers=8)
     model = LitFaceRecognition(**cfg)
     callbacks = [

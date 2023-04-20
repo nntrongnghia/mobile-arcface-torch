@@ -3,8 +3,9 @@ import logging
 
 import torch
 from torchsummary import summary
-
+from torch.nn import functional as F
 from dataset.lfw import LFWPair
+from dataset.lfwbin import LFWBin
 from lit_module import LitFaceRecognition
 from utils import get_config
 from sklearn.model_selection import KFold
@@ -16,26 +17,38 @@ log_root = logging.getLogger()
 log_root.setLevel(logging.INFO)
 
 
-def get_score(emb1: torch.Tensor, emb2: torch.Tensor) -> torch.Tensor:
+def get_cosine_score(emb1: torch.Tensor, emb2: torch.Tensor) -> torch.Tensor:
     with torch.no_grad():
         assert emb1.shape == emb2.shape
         cosine = torch.cosine_similarity(emb1, emb2)
         score = (cosine + 1) / 2
     return score
 
+def get_euclidean_score(emb1: torch.Tensor, emb2: torch.Tensor) -> torch.Tensor:
+    with torch.no_grad():
+        assert emb1.shape == emb2.shape
+        emb1 = F.normalize(emb1)
+        emb2 = F.normalize(emb2)
+        distance = torch.norm(emb1 - emb2, dim=-1)
+        score = 1 - distance / 2
+    return score
 
 def main(args):
     cfg = get_config(args.config)
-    # load model
-    model = LitFaceRecognition.load_from_checkpoint(
-        args.checkpoint, **cfg
-    ).backbone.cuda()
+    score_fn = get_euclidean_score if args.euclidean else get_cosine_score
+    if args.checkpoint.endswith(".ckpt"):
+        # load model
+        model = LitFaceRecognition.load_from_checkpoint(
+            args.checkpoint, **cfg
+        ).backbone.cuda()
+    elif args.checkpoint.endswith(".pt"):
+        model = cfg.model.cuda()
+        model.load_state_dict(torch.load(args.checkpoint))
     model.eval()
     logging.info(summary(model, (3, 112, 112)))
+    # load data
+    lfw = LFWBin(cfg.bin_path)
     with torch.no_grad():
-        # load data
-        lfw = LFWPair(**cfg.lfwpair_kwargs)
-        lfw.load_all()
         # Get embedding features
         emb1 = []
         emb2 = []
@@ -55,8 +68,9 @@ def main(args):
         emb2_flip = torch.concat(emb2_flip)
         # Get similarity score
         # score_flip use Test-time augmentation with horizontal flip
-        scores = get_score(emb1, emb2).numpy(force=True)
-        scores_flip = get_score(emb1 + emb1_flip, emb2 + emb2_flip).numpy(force=True)
+        scores = score_fn(emb1, emb2).numpy(force=True)
+        scores_flip = score_fn(emb1 + emb1_flip, emb2 + emb2_flip).numpy(force=True)
+        print(scores.max(), scores.min())
 
     # Calculate accuracy
     labels = lfw.labels.numpy(force=True)
@@ -119,4 +133,5 @@ if __name__ == "__main__":
         help="checkpoint to test",
         default="lightning_logs/ms1mv3_arcface_mbf_23-04-16-21h45/version_0/ms1mv3_arcface_mbf_best.ckpt",
     )
+    parser.add_argument("--euclidean", action='store_true')
     main(parser.parse_args())
