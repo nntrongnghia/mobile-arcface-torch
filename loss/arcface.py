@@ -46,9 +46,10 @@ class ArcFace(torch.nn.Module):
         cos_th_m = margin_mask * cos_th_m + (1 - margin_mask) * (cos_th - self.mm)
         
         logits = (one_hot * cos_th_m + (1 - one_hot) * cos_th) * self.scale
-        loss = F.cross_entropy(logits, labels)
         if return_cosine:
-            return loss, cos_th
+            return logits, cos_th
+        return logits
+        loss = F.cross_entropy(logits, labels)
         return loss
         
     

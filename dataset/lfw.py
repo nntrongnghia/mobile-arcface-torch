@@ -5,7 +5,11 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 import cv2
-
+import logging
+from joblib import Parallel, delayed
+from pqdm.threads import pqdm
+import time
+from tqdm import tqdm
 # Use the pairs.txt described in http://vis-www.cs.umass.edu/lfw/#views
 # This dataset is to test the 1:1 verification
 class LFWPair(Dataset):
@@ -19,6 +23,23 @@ class LFWPair(Dataset):
         with open(pairs_txt_path) as f:
             lines = f.readlines()[1:]
             self.pairs = [l.split() for l in lines]
+        self.samples = None
+        self.image1s = None
+        self.image2s = None
+        self.labels = None
+
+    def load_all(self):
+        logging.info("Loading all samples of LFW Test Pairs ...")
+        t1 = time.time()
+        self.samples = pqdm(range(len(self)), self.__getitem__, n_jobs=6)
+        self.image1s = torch.stack([s[0][0] for s in self.samples])
+        self.image2s = torch.stack([s[0][1] for s in self.samples])
+        self.labels = torch.stack([s[1] for s in self.samples])
+        print(self.image1s.shape)
+        print(self.image2s.shape)
+        print(self.labels.shape)
+        t2 = time.time()
+        logging.info(f"Done. Load all samples in {t2 - t1:.1f}s")
 
     def __len__(self):
         return len(self.pairs)
@@ -51,15 +72,19 @@ class LFWPair(Dataset):
 # for debug
 if __name__ == "__main__":
     import torchvision.transforms.functional as F
-
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
     dataset = LFWPair(
         "/home/nghia/dataset/LFW/lfw-deepfunneled",
         "/home/nghia/dataset/LFW/pairs.txt",
         False,
     )
-    loader = DataLoader(dataset, 10)
-    for imgs, labels in loader:
-        print(labels)
+    dataset.load_all()
+    print(dataset.labels)
+    print("hold")
+    # loader = DataLoader(dataset, 10)
+    # for imgs, labels in loader:
+    #     print(labels)
     # indices = np.arange(stop=len(dataset))
     # np.random.shuffle(indices)
     # for idx in indices:

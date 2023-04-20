@@ -19,6 +19,8 @@ import numpy as np
 import cv2
 from PIL import Image
 
+from loss.focal_loss import FocalLoss
+
 
 class LitFaceRecognition(pl.LightningModule):
     def __init__(
@@ -30,42 +32,43 @@ class LitFaceRecognition(pl.LightningModule):
         lr=0.1,
         momentum=0.9,
         weight_decay=5e-4,
+        loss="cross_entropy",
         *arg,
         **kwargs,
     ) -> None:
         super().__init__()
         self.optimizer_name = optimizer
         self.lr = lr
+        if loss == "cross_entropy":
+            self.loss = torch.nn.CrossEntropyLoss()
+        elif loss == "focal_loss":
+            self.loss = FocalLoss()
+        else:
+            raise ValueError("loss name not defined")
         self.momentum = momentum
         self.weight_decay = weight_decay
         self.backbone = model
         self.af = ArcFace(num_classes, embedding_size)
         self.auroc = AUROC("binary")
-        self.accuracy = Accuracy("binary")
-        self.max_cosine = MaxMetric()
-        self.min_cosine = MinMetric()
-        self.train_max_cosine = MaxMetric()
-        self.train_min_cosine = MinMetric()
-        self.sum_labels = SumMetric()
+        self.flip_auroc = AUROC("binary")
         self.pos_mean_score = MeanMetric("ignore")
         self.neg_mean_score = MeanMetric("ignore")
-        self.train_loss_epoch = MeanMetric()
+        self.flip_pos_mean_score = MeanMetric("ignore")
+        self.flip_neg_mean_score = MeanMetric("ignore")
 
     def training_step(self, batch):
         imgs, labels = batch
         emb = self.backbone(imgs)
-        loss, cosine = self.af(emb, labels, return_cosine=True)
+        logits, cosine = self.af(emb, labels, return_cosine=True)
+        loss = self.loss(logits, labels)
         target_cosine = torch.gather(cosine, 1, labels[:, None])
         self.log("mean_target_cosine", target_cosine.mean())
         self.log("train_loss", loss)
-        self.log("train_max_cosine", cosine.max())
-        self.log("train_min_cosine", cosine.min())
         return loss
 
     def validation_step(self, batch, batch_idx):
         # imgs1,2 has shape (B, C, H, W)
         pair_imgs, is_same = batch
-        self.sum_labels.update(is_same)
         # stack imgs to calculate embedding features
         pair_embs = self.backbone(torch.concat(pair_imgs))
         emb1, emb2 = torch.split(pair_embs, pair_imgs[0].shape[0])
@@ -73,14 +76,8 @@ class LitFaceRecognition(pl.LightningModule):
         score = (cosine + 1) / 2
         self.pos_mean_score.update(score[is_same.to(torch.bool)])
         self.neg_mean_score.update(score[~is_same.to(torch.bool)])
-        self.max_cosine.update(cosine)
-        self.min_cosine.update(cosine)
         self.auroc(score, is_same)
-        self.accuracy(score, is_same)
         self.log("lfw_auroc", self.auroc, on_epoch=True)
-        self.log("lfw_acc", self.accuracy, on_epoch=True)
-        self.log("max_cosine", self.max_cosine, on_epoch=True)
-        self.log("min_cosine", self.min_cosine, on_epoch=True)
         self.log("pos_mean_score", self.pos_mean_score, on_epoch=True)
         self.log("neg_mean_score", self.neg_mean_score, on_epoch=True)
         if batch_idx % (len(self.trainer.val_dataloaders[0]) // 20) == 0:
@@ -103,7 +100,7 @@ class LitFaceRecognition(pl.LightningModule):
             )
         else:
             raise ValueError(f"Optimizer {self.optimizer_name} not implemented")
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
@@ -113,6 +110,7 @@ class LitFaceRecognition(pl.LightningModule):
                 "interval": "epoch"
             },
         }
+
 
     def log_val_images(self, pair_imgs, labels, scores, batch_idx) -> None:
         # Get tensorboard logger

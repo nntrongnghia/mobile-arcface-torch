@@ -15,7 +15,7 @@ from dataset.mnist import MNISTVal
 from lit_module import LitFaceRecognition
 from utils import get_config, print_config
 import torch
-seed_everything(42, workers=True)
+# seed_everything(42, workers=True)
 
 log_root = logging.getLogger()
 log_root.setLevel(logging.INFO)
@@ -42,8 +42,7 @@ def main(args):
         LearningRateMonitor(logging_interval='epoch'),
         ModelCheckpoint(monitor="lfw_auroc", mode="max",
                         filename=f'{cfg.name}_best',
-                        dirpath=tb_logger.log_dir,
-                        save_on_train_epoch_end=True)]
+                        dirpath=tb_logger.log_dir)]
     trainer = Trainer(
         max_epochs=cfg.max_epochs,
         accelerator="gpu",
@@ -51,7 +50,6 @@ def main(args):
         gradient_clip_val=5,
         callbacks=callbacks,
         val_check_interval=cfg.val_check_interval,
-        # detect_anomaly=True
     )
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.checkpoint)
     print("hold")

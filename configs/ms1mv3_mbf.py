@@ -18,10 +18,8 @@ config.optimizer = "sgd"
 config.lr = 0.01
 config.momentum = 0.9
 config.weight_decay = 5e-4
-
-# config.optimizer = "adam"
-# config.lr = 0.001
-# config.weight_decay = 5e-4
+# config.loss = "cross_entropy"
+config.loss = "focal_loss"
 
 
 # Train Dataset
@@ -30,7 +28,7 @@ config.root_dir = "/home/nghia/dataset/ms1m-retinaface-t1"
 config.num_classes = 93431
 config.num_image = 5179510
 
-# Test Dataset - LFW Testset
+# Validation Dataset - LFW test pairs
 config.lfwpair_kwargs = {
     "img_dir": "/home/nghia/dataset/LFW/lfw-deepfunneled",
     "pairs_txt_path": "/home/nghia/dataset/LFW/pairs.txt"

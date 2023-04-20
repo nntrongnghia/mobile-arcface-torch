@@ -2,6 +2,7 @@ import importlib
 import os.path as osp
 import logging
 from ptflops import get_model_complexity_info
+import torch
 
 def get_config(config_file: str):
     assert 'configs' in config_file, 'config file setting must start with configs'
@@ -21,3 +22,22 @@ def print_config(cfg):
             logging.info(": " + key + " " * num_space + f'{macs} - {params} params')
         else:
             logging.info(": " + key + " " * num_space + str(value))
+            
+def inference(model: torch.nn.Module, images: torch.Tensor, ref_images: torch.Tensor = None, ref_embs: torch.Tensor = None) -> torch.Tensor:
+    # images must have shape [B, C, 112, 112] or [C, 112, 112]
+    assert images.shape[-1] == 112, "Image width must be 112px"
+    assert images.shape[-2] == 112, "Image height must be 112px"
+    if images.shape == 3:
+        # extend to [1, C, H, W]
+        images = images[None]
+    assert ref_images or ref_embs, "Must provide either ref_images or ref_embs for verification"
+    if ref_images and ref_embs:
+        logging.warning("Only ref_images will be used for verification")
+    embs = model(images)
+    if ref_images is not None:
+        if ref_images.shape == 3:
+            ref_images = ref_images[None]
+        ref_embs = model(ref_images)
+    cosine = torch.cosine_similarity(embs, ref_embs)
+    normalized_score = (cosine + 1) / 2 # normalize to range [0, 1]
+    return normalized_score

@@ -57,9 +57,12 @@ class MS1MV3(Dataset):
 # for debug
 
 if __name__ == "__main__":
+    import torchvision.transforms.functional as F
     root = "/home/nghia/dataset/ms1m-retinaface-t1"
-    dataset = MS1MV3(root, False)
+    dataset = MS1MV3(root, True)
     for img, label in dataset:
+        img = np.asarray(F.to_pil_image(((img * 0.5 + 0.5)*255).to(torch.uint8)))
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         print(img.shape, label)
         cv2.imshow('MS1M v3', img)
         key = cv2.waitKey(0)
