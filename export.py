@@ -2,6 +2,7 @@ import argparse
 import os
 import shutil
 import sys
+from typing import Any
 
 import cv2
 import numpy as np
@@ -15,17 +16,27 @@ from torchsummary import summary
 from lit_module import LitFaceRecognition
 from onnx_tf.backend import prepare
 from utils import get_config
+from torch.nn import Sequential, Module
 
+class ImageNorm(Module):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    def forward(self, img):
+        img = img / 255
+        img = (img - 0.5) / 0.5
+        return img
 
 def main(args):
     cfg = get_config(args.config)
     if args.checkpoint.endswith(".ckpt"):
         # load model
-        model = LitFaceRecognition.load_from_checkpoint(args.checkpoint, **cfg).backbone
+        backbone = LitFaceRecognition.load_from_checkpoint(args.checkpoint, **cfg).backbone
     elif args.checkpoint.endswith(".pt"):
-        model = cfg.model
-        model.load_state_dict(torch.load(args.checkpoint))
-    model.cpu().eval()
+        backbone = cfg.model
+        backbone.load_state_dict(torch.load(args.checkpoint))
+    backbone.cpu().eval()
+    model = Sequential(ImageNorm(),backbone)
     sample_input = torch.rand((1, 3, 112, 112))
     checkpoint_name = os.path.basename(args.checkpoint).split(".")[0]
     dir_path = os.path.dirname(args.checkpoint)
