@@ -58,22 +58,24 @@ if __name__ == "__main__":
     dataset = LFWBin("/home/nghia/dataset/ms1m-retinaface-t1/lfw.bin")
     print(dataset.labels)
     print("hold")
-    # loader = DataLoader(dataset, 10)
+    loader = DataLoader(dataset, 10)
     # for imgs, labels in loader:
     #     print(labels)
-    # indices = np.arange(stop=len(dataset))
-    # np.random.shuffle(indices)
-    # for idx in indices:
-    #     (img1, img2), label = dataset[idx]
-    #     img1 = cv2.cvtColor(
-    #         np.asarray(F.to_pil_image(img1.detach())), cv2.COLOR_RGB2BGR
-    #     )
-    #     img2 = cv2.cvtColor(
-    #         np.asarray(F.to_pil_image(img2.detach())), cv2.COLOR_RGB2BGR
-    #     )
-    #     cv2.imshow("pair", cv2.hconcat([img1, img2]))
-    #     print(label)
-    #     key = cv2.waitKey(0)
-    #     if key == 27:  # ESC to exit
-    #         break
-    # print("end")
+    indices = np.arange(stop=len(dataset))
+    np.random.shuffle(indices)
+    for idx in indices:
+        (img1, img2), label = dataset[idx]
+        img1 = cv2.cvtColor(
+            np.asarray(F.to_pil_image(((img1.detach() * 0.5 + 0.5) * 255).to(torch.uint8))), cv2.COLOR_RGB2BGR
+        )
+        img2 = cv2.cvtColor(
+            np.asarray(F.to_pil_image(((img2.detach() * 0.5 + 0.5) * 255).to(torch.uint8))), cv2.COLOR_RGB2BGR
+        )
+        # img1 = np.asarray((img1.detach() * 0.5 + 0.5) * 255).astype(np.uint8)
+        # img2 = np.asarray((img2.detach() * 0.5 + 0.5) * 255).astype(np.uint8)
+        cv2.imshow("pair", cv2.hconcat([img1, img2]))
+        print(label)
+        key = cv2.waitKey(0)
+        if key == 27:  # ESC to exit
+            break
+    print("end")

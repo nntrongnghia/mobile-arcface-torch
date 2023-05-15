@@ -131,7 +131,7 @@ if __name__ == "__main__":
         "--checkpoint",
         type=str,
         help="checkpoint to test",
-        default="lightning_logs/ms1mv3_arcface_mbf_23-04-16-21h45/version_0/ms1mv3_arcface_mbf_best.ckpt",
+        default="lightning_logs/ms1mv3_arcface_mbf_23-04-16-21h45/ms1mv3_arcface_mbf_best.ckpt",
     )
     parser.add_argument("--euclidean", action='store_true')
     main(parser.parse_args())
