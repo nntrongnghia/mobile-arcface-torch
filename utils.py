@@ -3,6 +3,7 @@ import os.path as osp
 import logging
 from ptflops import get_model_complexity_info
 import torch
+from torch.nn import Module, Sequential
 
 def get_config(config_file: str):
     assert 'configs' in config_file, 'config file setting must start with configs'
@@ -41,3 +42,16 @@ def inference(model: torch.nn.Module, images: torch.Tensor, ref_images: torch.Te
     cosine = torch.cosine_similarity(embs, ref_embs)
     normalized_score = (cosine + 1) / 2 # normalize to range [0, 1]
     return normalized_score
+
+
+def get_inference_model(backbone):
+    class ImageNorm(Module):
+        def __init__(self) -> None:
+            super().__init__()
+            
+        def forward(self, img):
+            img = img / 255
+            img = (img - 0.5) / 0.5
+            return img
+    
+    return Sequential(ImageNorm(),backbone)
