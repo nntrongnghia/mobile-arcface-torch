@@ -21,7 +21,7 @@ from torchvision import transforms
 from numpy.random import choice
 from lightning.pytorch import Trainer, seed_everything
 
-seed_everything(0)
+seed_everything(42)
 log_root = logging.getLogger()
 log_root.setLevel(logging.INFO)
 
@@ -118,15 +118,15 @@ def main(args):
             # key = cv2.waitKey(0)
             # if key == 27: # ESC to exit
             #     break
-    threshold_range = np.arange(0, 1, 0.005)
-    acc_range = np.array([accuracy_score(labels, np.array(scores) > t) for t in threshold_range])
-    best_threshold = threshold_range[acc_range.argmax()]
-    best_acc = acc_range.max()
-    # acc = accuracy_score(labels, preds)
+    # threshold_range = np.arange(0, 1, 0.005)
+    # acc_range = np.array([accuracy_score(labels, np.array(scores) > t) for t in threshold_range])
+    # best_threshold = threshold_range[acc_range.argmax()]
+    # best_acc = acc_range.max()
+    acc = accuracy_score(labels, np.array(scores) > args.threshold)
     cv2.destroyAllWindows()
     log_img = cv2.vconcat(log_images)
     cv2.imwrite('vnfaces_test.jpg', log_img)
-    print(f"acc = {best_acc} @ {best_threshold}")
+    print(f"acc = {acc} @ {args.threshold}")
 
 
 if __name__ == "__main__":
@@ -145,5 +145,4 @@ if __name__ == "__main__":
         default="lightning_logs/ms1mv3_arcface_mbf_23-04-16-21h45/ms1mv3_arcface_mbf_best.ckpt",
     )
     parser.add_argument("--threshold", type=float, default=0.63)
-    parser.add_argument("--euclidean", action="store_true")
     main(parser.parse_args())
