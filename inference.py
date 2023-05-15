@@ -83,9 +83,8 @@ def main(args):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="")
-    # parser.add_argument("--image1", type=str, default="vnfaces/Le_Ha_Truc/2.png")
-    parser.add_argument("--image1", type=str, default="vnfaces/Thai_Van_Linh/3.png")
-    parser.add_argument("--image2", type=str, default="vnfaces/Thai_Van_Linh/4.png")
+    parser.add_argument("--image1", type=str, default="test_images/0.jpg")
+    parser.add_argument("--image2", type=str, default="test_images/1.jpg")
     parser.add_argument(
         "--config",
         type=str,
