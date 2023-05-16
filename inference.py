@@ -1,29 +1,11 @@
 import argparse
-from copy import copy
-import logging
-import os
-from typing import Tuple
 import cv2
 
 import torch
-from torchsummary import summary
-from torch.nn import functional as F
-from dataset.lfw import LFWPair
-from dataset.lfwbin import LFWBin
 from lit_module import LitFaceRecognition
 from utils import get_config, get_inference_model
-from sklearn.model_selection import KFold
 import numpy as np
-from tqdm import tqdm
-from sklearn.metrics import accuracy_score
-from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
-from numpy.random import choice
-from lightning.pytorch import Trainer, seed_everything
 
-seed_everything(42)
-log_root = logging.getLogger()
-log_root.setLevel(logging.INFO)
 
 
 def load_image(path):

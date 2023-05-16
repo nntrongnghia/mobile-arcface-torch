@@ -59,7 +59,9 @@ def main(args):
     # make a converter object from the saved tensorflow file
     converter = tf.compat.v1.lite.TFLiteConverter.from_saved_model(tf_path)
     # tell converter which type of optimization techniques to use
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    if args.optimize_tflite:
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        checkpoint_name += "_opt"
     # to view the best option for optimization read documentation of tflite about optimization
     # go to this link https://www.tensorflow.org/lite/guide/get_started#4_optimize_your_model_optional
 
@@ -83,4 +85,5 @@ if __name__ == "__main__":
         help="checkpoint to test",
         default="lightning_logs/ms1mv3_arcface_mbf_23-04-16-21h45/version_0/ms1mv3_arcface_mbf_best.ckpt",
     )
+    parser.add_argument("--optimize-tflite", action="store_true")
     main(parser.parse_args())
