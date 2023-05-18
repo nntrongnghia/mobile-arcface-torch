@@ -28,7 +28,6 @@ def main(args):
     cfg = get_config(args.config)
     img1, img1_torch = load_image(args.image1)
     img2, img2_torch = load_image(args.image2)
-    img1, img2 = cv2.cvtColor(img1, cv2.COLOR_RGB2BGR), cv2.cvtColor(img2, cv2.COLOR_RGB2BGR)
     # load model
     backbone = (
         LitFaceRecognition.load_from_checkpoint(args.checkpoint, **cfg)
@@ -40,6 +39,8 @@ def main(args):
     with torch.no_grad():
         emb1, emb2 = model(img1_torch), model(img2_torch)
         score = get_cosine_score(emb1, emb2).detach().cpu().numpy()[0]
+    # show inference result
+    img1, img2 = cv2.cvtColor(img1, cv2.COLOR_RGB2BGR), cv2.cvtColor(img2, cv2.COLOR_RGB2BGR)
     himg = cv2.hconcat([img1, img2])
     log_img = np.zeros((himg.shape[0] + 30, himg.shape[1], 3), dtype=np.uint8) + 255
     log_img[: himg.shape[0], : himg.shape[1]] = himg
