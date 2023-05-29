@@ -10,7 +10,7 @@ import numpy as np
 
 def load_image(path):
     img = cv2.imread(path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (112, 112))
     img_torch = torch.tensor(np.moveaxis(img, -1, 0))[None].cuda()
     return img, img_torch
@@ -40,7 +40,7 @@ def main(args):
         emb1, emb2 = model(img1_torch), model(img2_torch)
         score = get_cosine_score(emb1, emb2).detach().cpu().numpy()[0]
     # show inference result
-    img1, img2 = cv2.cvtColor(img1, cv2.COLOR_RGB2BGR), cv2.cvtColor(img2, cv2.COLOR_RGB2BGR)
+    # img1, img2 = cv2.cvtColor(img1, cv2.COLOR_RGB2BGR), cv2.cvtColor(img2, cv2.COLOR_RGB2BGR)
     himg = cv2.hconcat([img1, img2])
     log_img = np.zeros((himg.shape[0] + 30, himg.shape[1], 3), dtype=np.uint8) + 255
     log_img[: himg.shape[0], : himg.shape[1]] = himg
